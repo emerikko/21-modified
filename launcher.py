@@ -9,16 +9,13 @@ import sys
 from os import listdir
 from random import randint
 
-from game import Game
+from Game import DefaultGame
 from rules import Rules
 
 
 class Launcher(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.mode = None
-        self.player_2 = None
-
         self.rules_window = None
         if sys.platform == "win32":
             self.scaleFactor = windll.shcore.GetScaleFactorForDevice(0) / 100
@@ -26,7 +23,6 @@ class Launcher(QMainWindow):
             self.scaleFactor = 1.0
         self.screen_size = int(pyautogui.size()[0] // self.scaleFactor), int(pyautogui.size()[1] // self.scaleFactor)
         self.offset = int(50 / self.scaleFactor * (self.screen_size[0] / 1920 + self.screen_size[1] / 1080) / 2)
-        print(self.offset)
 
         try:
             wins = open("wins.json", "r")
@@ -43,11 +39,7 @@ class Launcher(QMainWindow):
         height = self.screen_size[1] // 2 - (self.offset + 30)
         font_size = self.screen_size[1] // 50
 
-        for font in listdir("fonts"):
-            id = QFontDatabase.addApplicationFont(f"fonts/{font}")
-            print(id, QFontDatabase.applicationFontFamilies(id)[0])
-
-        self.setStyleSheet("background-color:#1e1e1e; color: #747474; font-family: 'Futura PT Medium';")
+        self.setStyleSheet("background-color:#1e1e1e; color: #747474;")
         self.setWindowTitle("Лаунчер")
         self.setGeometry(self.screen_size[0] // 4 + self.offset, self.offset + 30, width, height)
         self.setMinimumSize(width, height)
@@ -100,6 +92,11 @@ class Launcher(QMainWindow):
         self.default_mode.setGeometry(width * 3 // 4 - shift, shift, width // 4, height // 8)
         self.default_mode.setStyleSheet(f"font-size: {font_size}px;")
         self.mode_group.addButton(self.default_mode)
+        self.special_mode = QRadioButton("Особенный режим", self)
+        self.special_mode.setObjectName("1")
+        self.special_mode.setGeometry(width * 3 // 4 - shift, shift + shift + shift, width // 4, height // 8)
+        self.special_mode.setStyleSheet(f"font-size: {font_size}px;")
+        self.mode_group.addButton(self.special_mode)
         self.mode_group.buttonToggled.connect(self.setMode)
 
         self.player_group = QButtonGroup(self)
@@ -150,7 +147,10 @@ class Launcher(QMainWindow):
         self.updateStats()
 
     def startGame(self):
-        self.game_window = Game(self.screen_size, self.offset, self.mode_group.checkedButton().objectName(),
-                                self.player_group.checkedButton().objectName())
+        if self.player_group.checkedButton().objectName() == "0":
+            self.game_window = DefaultGame(self.screen_size, self.offset,
+                                           self.player_group.checkedButton().objectName())
+        elif self.player_group.checkedButton().objectName() == "1":
+            pass
         self.game_window.show()
         self.close()
