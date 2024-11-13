@@ -94,7 +94,7 @@ class Launcher(QMainWindow):
         self.mode_group.addButton(self.default_mode)
         self.special_mode = QRadioButton("Особенный режим", self)
         self.special_mode.setObjectName("1")
-        self.special_mode.setGeometry(width * 3 // 4 - shift, shift + shift + shift, width // 4, height // 8)
+        self.special_mode.setGeometry(width * 3 // 4 - shift, shift + height // 8, width // 4, height // 8)
         self.special_mode.setStyleSheet(f"font-size: {font_size}px;")
         self.mode_group.addButton(self.special_mode)
         self.mode_group.buttonToggled.connect(self.setMode)

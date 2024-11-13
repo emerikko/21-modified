@@ -56,7 +56,6 @@ class ValueCard(QWidget):
 
     def openCard(self, opened_amount):
         self.opened = True
-        print(self.hidden)
         self.move(self.offset + (self.width() + self.offset) * opened_amount, self.offset + self.screen_size[1] // 2)
         self.show()
 
@@ -77,7 +76,8 @@ class DefaultGame(QMainWindow):
         self.value_stack = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
         self.action_buttons = {
             "take_card": None,
-            "end_turn": None
+            "end_turn": None,
+            "exit": None
         }
         self.skipped = 0
         random.shuffle(self.value_stack)
@@ -92,9 +92,9 @@ class DefaultGame(QMainWindow):
         shift = (width // 50 + height // 50) // 2
         font_size = (self.screen_size[0] + self.screen_size[1]) // 150
 
-        self.turnLabel = QLabel(f"Ход игрока {self.player_turn + 1}", self)
-        self.turnLabel.setGeometry(shift, shift, (width - shift - shift) // 4, (height - shift - shift) // 8)
-        self.turnLabel.setStyleSheet(f"font-size: {font_size * 2}px;")
+        self.infoLabel = QLabel(f"Ход игрока {self.player_turn + 1}", self)
+        self.infoLabel.setGeometry(shift, shift, (width - shift - shift) // 4, (height - shift - shift) // 8)
+        self.infoLabel.setStyleSheet(f"font-size: {font_size * 2}px;")
 
         self.actionButton1 = QPushButton(self)
         self.actionButton1.setGeometry(width // 2,
@@ -105,14 +105,25 @@ class DefaultGame(QMainWindow):
                                        shift + (height - shift - shift) * 3 // 4,
                                        (width - shift - shift - shift) // 4, (height - shift - shift) // 4)
 
+        self.actionButton3 = QPushButton(self)
+        self.actionButton3.setGeometry(shift + (width - shift - shift) * 3 // 4,
+                                       (height - shift - shift) * 2 // 4,
+                                       (width - shift - shift - shift) // 4, (height - shift - shift) // 4)
+        self.actionButton3.setStyleSheet(f"background-color: #FF652F; font-size: {font_size}px; color: #272727;")
+
         self.action_buttons["take_card"] = self.actionButton1
         self.action_buttons["end_turn"] = self.actionButton2
+        self.action_buttons["exit"] = self.actionButton3
 
         self.actionButton1.setText("Взять карту")
         self.actionButton1.clicked.connect(self.summonValueCard)
 
         self.actionButton2.setText("Закончить ход")
-        self.actionButton2.clicked.connect(self.switch_turn)
+        self.actionButton2.clicked.connect(self.switchTurn)
+
+        self.actionButton3.setText("Выход")
+        self.actionButton3.clicked.connect(self.closeEvent)
+        self.actionButton3.hide()
 
         self.setWindowTitle("21 очко")
         self.setGeometry(self.offset, self.offset + 30, width, height)
@@ -124,14 +135,17 @@ class DefaultGame(QMainWindow):
         self.closeCards(True)
         self.close()
 
-    def switch_turn(self):
+    def switchTurn(self):
         self.closeCards(True)
         self.player_turn = (self.player_turn + 1) % 2
         self.showCards(self.player_turn)
-        if self.skipped != 2:
+        print(self.skipped)
+        if self.skipped >= 2:
             self.endGame()
         if len(self.value_stack) != 0:
             self.action_buttons["take_card"].setEnabled(True)
+        self.skipped += 1
+        self.infoLabel.setText(f"Ход игрока {self.player_turn + 1}")
 
     def startGame(self):
         for i in range(4):
@@ -142,7 +156,16 @@ class DefaultGame(QMainWindow):
         points = {0: 0, 1: 0}
         for card in self.value_cards:
             points[card.player] += card.value
-        print('end')
+        if points[self.player_turn] > 21:
+            self.infoLabel.setText(f"Игрок {self.player_turn + 1} проиграл")
+        else:
+            if points[0] > points[1]:
+                self.infoLabel.setText(f"Игрок 1 победил")
+            else:
+                self.infoLabel.setText(f"Игрок 2 победил")
+        self.actionButton1.setEnabled(False)
+        self.actionButton2.setEnabled(False)
+        self.action_buttons["end_turn"].setEnabled(True)
 
     def closeCards(self, all=False):
         opened = [card.opened for card in self.value_cards].count(True)
