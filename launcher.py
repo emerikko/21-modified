@@ -28,11 +28,11 @@ class Launcher(QMainWindow):
         self.offset = int(50 / self.scaleFactor * (self.screen_size[0] / 1920 + self.screen_size[1] / 1080) / 2)
 
         try:
-            wins = open("wins.json", "r")
+            wins = open("stats.json", "r")
             self.wins = json.load(wins)
         except FileNotFoundError:
-            wins = open("wins.json", "w")
-            self.wins = {"player_1": 0, "player_2": 0}
+            wins = open("stats.json", "w")
+            self.wins = {"0": 0, "1": 0}
             json.dump(self.wins, wins)
         self.initUI()
 
@@ -100,11 +100,6 @@ class Launcher(QMainWindow):
         self.default_mode.setGeometry(width * 3 // 4 - shift, shift, width // 4, height // 8)
         self.default_mode.setStyleSheet(f"font-size: {font_size}px;")
         self.mode_group.addButton(self.default_mode)
-        self.special_mode = QRadioButton(self.translations[self.language]["special_mode"], self)
-        self.special_mode.setObjectName("1")
-        self.special_mode.setGeometry(width * 3 // 4 - shift, shift + height // 8, width // 4, height // 8)
-        self.special_mode.setStyleSheet(f"font-size: {font_size}px;")
-        self.mode_group.addButton(self.special_mode)
         self.mode_group.buttonToggled.connect(self.setMode)
 
         self.player_group = QButtonGroup(self)
@@ -138,20 +133,20 @@ class Launcher(QMainWindow):
             self.start_button.setEnabled(False)
 
     def closeEvent(self, event):
-        wins = open("wins.json", "w")
+        wins = open("stats.json", "w")
         json.dump(self.wins, wins)
         wins.close()
         self.closeRules()
         self.close()
 
     def updateStats(self):
-        wins = open("wins.json", "r")
+        wins = open("stats.json", "r")
         self.stats_label.setText(f"{self.translations[self.language]['wins_of_player']} 1:\n"
                                  f"{self.translations[self.language]['wins_of_player']} 2:\n")
         self.wins = json.load(wins)
         wins.close()
-        self.stats_values.setText(f"{self.wins['player_1']}\n"
-                                  f"{self.wins['player_2']}\n")
+        self.stats_values.setText(f"{self.wins['0']}\n"
+                                  f"{self.wins['1']}\n")
 
     def updateLanguage(self):
         if self.language_group.checkedButton().text() == "Русский":
@@ -170,8 +165,8 @@ class Launcher(QMainWindow):
             self.rules_window.close()
 
     def resetStats(self):
-        wins = open("wins.json", "w")
-        self.wins = {"player_1": 0, "player_2": 0, "bot": 0}
+        wins = open("stats.json", "w")
+        self.wins = {"0": 0, "1": 0}
         json.dump(self.wins, wins)
         wins.close()
         self.updateStats()
@@ -179,7 +174,8 @@ class Launcher(QMainWindow):
     def startGame(self):
         if self.player_group.checkedButton().objectName() == "0":
             self.game_window = DefaultGame(self.screen_size, self.offset,
-                                           self.player_group.checkedButton().objectName(), self.language, self.translations)
+                                           self.player_group.checkedButton().objectName(),
+                                           self.language, self.translations)
         elif self.player_group.checkedButton().objectName() == "1":
             pass
         self.game_window.show()
