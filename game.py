@@ -1,10 +1,17 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QPushButton, QMainWindow, QWidget, QLabel
+"""
+Логика игры
+"""
 from random import shuffle
 import json
 
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QPushButton, QMainWindow, QWidget, QLabel
+
 
 class ValueCard(QWidget):
+    """
+    Класс для отображения значения карты, с возможностью скрывать её
+    """
     def __init__(self, screen_size: set, offset: int, value: int, player_id: int, language,
                  translations, is_hidden: bool = False):
         super().__init__()
@@ -20,6 +27,9 @@ class ValueCard(QWidget):
         self.initUI()
 
     def initUI(self):
+        """
+        Инициализация интерфейса
+        """
         card_width = self.screen_size[0] // 8 - self.offset // 4
         card_height = self.screen_size[1] // 3 - (self.offset + 30)
         shift = (self.width() // 50 + self.height() // 50) // 2
@@ -31,11 +41,11 @@ class ValueCard(QWidget):
 
         if self.is_hidden:
             # Создать кнопку для отображения/скрывания значения карты
-            self.visibilityBtn = QPushButton(self)
-            self.visibilityBtn.setGeometry(shift, shift, card_width // 2 - 3 // 2 * shift, card_height - 2 * shift)
-            self.visibilityBtn.setText('\n'.join(list(self.translations[self.language]['show'])))
-            self.visibilityBtn.clicked.connect(self.changeValueVisibility)
-            self.visibilityBtn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
+            self.visibility_btn = QPushButton(self)
+            self.visibility_btn.setGeometry(shift, shift, card_width // 2 - 3 // 2 * shift, card_height - 2 * shift)
+            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['show'])))
+            self.visibility_btn.clicked.connect(self.change_value_visibility)
+            self.visibility_btn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
 
         # Создать лейбл для отображения значения карты
         self.value_label = QLabel(self)
@@ -46,37 +56,59 @@ class ValueCard(QWidget):
         if self.is_hidden:
             self.value_label.hide()
 
-    def changeValueVisibility(self):
+    def change_value_visibility(self):
+        """
+        Переключение отображения значения карты
+        """
         if self.value_label.isVisible():
-            self.setValueVisibility(False)
+            self.set_value_visibility(False)
         else:
-            self.setValueVisibility(True)
+            self.set_value_visibility(True)
 
-    def setValueVisibility(self, status: bool):
+    def set_value_visibility(self, status: bool):
+        """
+        Установка отображения значения карты
+        """
         if status:
             self.value_label.show()
-            self.visibilityBtn.setText('\n'.join(list(self.translations[self.language]['hide'])))
-            self.visibilityBtn.setStyleSheet(f"background-color: #5CDB95; font-size: {self.font_size}px; "
+            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['hide'])))
+            self.visibility_btn.setStyleSheet(f"background-color: #5CDB95; font-size: {self.font_size}px; "
                                              f"color: black;")
         else:
             self.value_label.hide()
-            self.visibilityBtn.setText('\n'.join(list(self.translations[self.language]['show'])))
-            self.visibilityBtn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
+            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['show'])))
+            self.visibility_btn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
 
     def closeEvent(self, event):
-        self.hideCard()
+        """
+        Установка карты закрытой, при её ручном закрытии
+        """
+        self.hide_card()
 
-    def openCard(self, opened_amount):
+    def open_card(self, opened_amount):
+        """
+        Открытие карты
+
+        Устанавливает значение закрытости карты. Передвигает карту в нужное положение. Открывает карту
+        """
         self.is_opened = True
         self.move(self.offset + (self.width() + self.offset) * opened_amount, self.offset + self.screen_size[1] // 2)
         self.show()
 
-    def hideCard(self):
+    def hide_card(self):
+        """
+        Закрытие карты
+
+        Устанавливает значение закрытости карты и закрывает карту
+        """
         self.is_opened = False
         self.close()
 
 
 class DefaultGame(QMainWindow):
+    """
+    Класс, отвечающий за логику игры
+    """
     def __init__(self, screen_size, offset, player_mode, language, translations):
         super().__init__()
         self.language = language
@@ -89,7 +121,7 @@ class DefaultGame(QMainWindow):
         self.player2_cards = []
         self.winner = None
         self.stats_updated = False
-        self.value_stack = [i for i in range(1, 11)]
+        self.value_stack = list(range(1, 11))
         shuffle(self.value_stack)
         self.skipped = 0
         self.player_mode = player_mode
@@ -98,6 +130,9 @@ class DefaultGame(QMainWindow):
         self.initUI()
 
     def initUI(self):
+        """
+        Инициализация интерфейса
+        """
         width = self.screen_size[0] - 2 * self.offset
         height = self.screen_size[1] // 2 - (self.offset + 30)
         shift = (width // 50 + height // 50) // 2
@@ -153,15 +188,24 @@ class DefaultGame(QMainWindow):
         self.show()
 
     def closeEvent(self, event):
+        """
+        Закрытие игры и сохранение статистики
+        """
         self.close_cards(True)
         if self.winner is not None and not self.stats_updated:
-            stats = json.load(open("stats.json", "r", encoding="utf-8"))
-            stats[f"{self.winner}"] += 1
-            json.dump(stats, open("stats.json", "w", encoding="utf-8"))
+            with open("stats.json", "r+", encoding="utf-8") as f:
+                stats = json.load(f)
+                stats[f"{self.winner}"] += 1
+                json.dump(stats, f, ensure_ascii=False)
             self.stats_updated = True
         self.close()
 
     def switch_turn(self):
+        """
+        Переключение хода
+
+        Закрывает карты текущего игрока и переключает ход. Изменяет информационный лейблы
+        """
         self.close_cards(True)
         self.current_player = (self.current_player + 1) % 2
         self.show_cards(self.current_player)
@@ -177,12 +221,22 @@ class DefaultGame(QMainWindow):
             self.skipped += 1
 
     def start_game(self):
+        """
+        Создание стартовых карт
+        """
+        self.value_stack = list(range(1, 11))
+        shuffle(self.value_stack)
         for i in range(4):
             value = self.value_stack.pop()
             self.value_cards.append(ValueCard(self.screen_size, self.offset, value, i % 2, self.language,
                                               self.translations, True))
 
     def end_game(self):
+        """
+        Завершение игры
+
+        Выбирает победителя и изменяет информационные лейблы
+        """
         points = {0: 0, 1: 0}
         for card in self.value_cards:
             points[card.player_id] += card.value
@@ -212,31 +266,44 @@ class DefaultGame(QMainWindow):
         self.end_button.setEnabled(False)
 
     def close_cards(self, close_all=False):
+        """
+        Закрытие карт
+
+        Закрывает карты текущего игрока или всех игроков
+        """
         opened = [card.is_opened for card in self.value_cards].count(True)
         if not close_all:
             player_id = int(self.sender().objectName())
             for card in self.value_cards:
                 if card.player_id == player_id and card.is_opened:
-                    card.setValueVisibility(False)
-                    card.hideCard()
+                    card.set_value_visibility(False)
+                    card.hide_card()
                     opened -= 1
         else:
             for card in self.value_cards:
                 if card.is_opened:
-                    card.setValueVisibility(False)
-                    card.hideCard()
+                    card.set_value_visibility(False)
+                    card.hide_card()
                     opened -= 1
                 if card.value_label.isVisible():
-                    card.changeValueVisibility()
+                    card.change_value_visibility()
 
     def show_cards(self, player_id):
+        """
+        Открытие карт
+
+        Открывает карты указанного игрока
+        """
         opened = [card.is_opened for card in self.value_cards].count(True)
         for card in self.value_cards:
             if card.player_id == player_id and not card.is_opened:
-                card.openCard(opened)
+                card.open_card(opened)
                 opened += 1
 
     def take_value_card(self):
+        """
+        Извлечение карты из колоды
+        """
         value = self.value_stack.pop()
         self.skipped = 0
         self.value_cards.append(ValueCard(self.screen_size, self.offset, value,
