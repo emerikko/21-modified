@@ -4,6 +4,7 @@ import json
 from ctypes import windll
 import sys
 
+from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QPushButton, QWidget, QLabel, QRadioButton, QButtonGroup, QFrame
 import pyautogui
@@ -11,35 +12,8 @@ import pyautogui
 from game import DefaultGame
 
 
-class Rules(QWidget):
-    """Класс для отображения правил игры"""
-
-    def __init__(self, screen_size, offset, language, translations):
-        super().__init__()
-        self.language = language
-        self.translations = translations
-        self.screen_size = screen_size
-        self.offset = offset
-        self.initUI()
-
-    def initUI(self):
-        """Инициализация интерфейса"""
-        shift = self.screen_size[1] // 50
-        width = self.screen_size[0] - self.offset - self.offset
-        height = self.screen_size[1] - self.offset - self.offset - 60
-        font_size = (self.screen_size[0] + self.screen_size[1]) // 150
-
-        self.setWindowTitle(self.translations[self.language]["rules"])
-        self.setGeometry(self.offset, self.offset + 30, width, height)
-        self.description = QLabel(self.translations[self.language]["rules_text"], self)
-        self.description.setGeometry(shift, shift, width, height)
-        self.description.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.description.setStyleSheet(f"font-size: {font_size}px;")
-
-
 class Launcher(QWidget):
     """Класс лаунчера"""
-
     def __init__(self):
         super().__init__()
         translation_file = "translation.json"
@@ -56,12 +30,12 @@ class Launcher(QWidget):
         self.offset = int(50 / self.scale_factor * (self.screen_size[0] / 1920 + self.screen_size[1] / 1080) / 2)
 
         try:
-            with open("stats.json", "r", encoding="utf-8") as wins:
-                self.wins = json.load(wins)
+            with open("stats.json", "r", encoding="utf-8") as stats:
+                self.wins = json.load(stats)
         except FileNotFoundError:
-            with open("stats.json", "w", encoding="utf-8") as wins:
+            with open("stats.json", "w", encoding="utf-8") as stats:
                 self.wins = {"0": 0, "1": 0}
-                json.dump(self.wins, wins, ensure_ascii=False)
+                json.dump(self.wins, stats, ensure_ascii=False)
         self.initUI()
 
     def initUI(self):
@@ -71,7 +45,8 @@ class Launcher(QWidget):
         height = self.screen_size[1] // 2 - (self.offset + 30)
         font_size = self.screen_size[1] // 50
 
-        self.setStyleSheet("background-color:#1e1e1e; color: #747474;")
+        self.setWindowIcon(QtGui.QIcon("icons/launcher.ico"))
+        self.setStyleSheet("color: #747474;")
         self.setWindowTitle(self.translations[self.language]["launcher"])
         self.setGeometry(self.screen_size[0] // 4 + self.offset, self.offset + 30, width, height)
         self.setMinimumSize(width, height)
@@ -218,3 +193,30 @@ class Launcher(QWidget):
             pass
         self.game_window.show()
         self.close()
+
+
+class Rules(QWidget):
+    """Класс для отображения правил игры"""
+
+    def __init__(self, screen_size, offset, language, translations):
+        super().__init__()
+        self.language = language
+        self.translations = translations
+        self.screen_size = screen_size
+        self.offset = offset
+        self.initUI()
+
+    def initUI(self):
+        """Инициализация интерфейса"""
+        shift = self.screen_size[1] // 50
+        width = self.screen_size[0] - self.offset - self.offset
+        height = self.screen_size[1] - self.offset - self.offset - 60
+        font_size = (self.screen_size[0] + self.screen_size[1]) // 150
+
+        self.setWindowIcon(QtGui.QIcon("icons/rules.ico"))
+        self.setWindowTitle(self.translations[self.language]["rules"])
+        self.setGeometry(self.offset, self.offset + 30, width, height)
+        self.description = QLabel(self.translations[self.language]["rules_text"], self)
+        self.description.setGeometry(shift, shift, width, height)
+        self.description.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.description.setStyleSheet(f"font-size: {font_size}px;")

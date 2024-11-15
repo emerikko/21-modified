@@ -4,110 +4,14 @@
 from random import shuffle
 import json
 
+from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QPushButton, QMainWindow, QWidget, QLabel
 
 
-class ValueCard(QWidget):
-    """
-    Класс для отображения значения карты, с возможностью скрывать её
-    """
-    def __init__(self, screen_size: set, offset: int, value: int, player_id: int, language,
-                 translations, is_hidden: bool = False):
-        super().__init__()
-        self.language = language
-        self.translations = translations
-        self.value = value
-        self.is_hidden = is_hidden
-        self.player_id = player_id
-        self.screen_size = screen_size
-        self.offset = offset
-        self.is_opened = False
-        self.font_size = (self.screen_size[0] + self.screen_size[1]) // 200
-        self.initUI()
-
-    def initUI(self):
-        """
-        Инициализация интерфейса
-        """
-        card_width = self.screen_size[0] // 8 - self.offset // 4
-        card_height = self.screen_size[1] // 3 - (self.offset + 30)
-        shift = (self.width() // 50 + self.height() // 50) // 2
-
-        self.setWindowTitle(f"{self.translations[self.language]['card_of_player']} {self.player_id + 1}")
-        self.resize(card_width, card_height)
-        self.setMaximumSize(card_width, card_height)
-        self.setMinimumSize(card_width, card_height)
-
-        if self.is_hidden:
-            # Создать кнопку для отображения/скрывания значения карты
-            self.visibility_btn = QPushButton(self)
-            self.visibility_btn.setGeometry(shift, shift, card_width // 2 - 3 // 2 * shift, card_height - 2 * shift)
-            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['show'])))
-            self.visibility_btn.clicked.connect(self.change_value_visibility)
-            self.visibility_btn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
-
-        # Создать лейбл для отображения значения карты
-        self.value_label = QLabel(self)
-        self.value_label.setGeometry(card_width // 2 + shift // 2, 0, card_width // 2 - 3 // 2 * shift, card_height)
-        self.value_label.setStyleSheet(f"font-size: {self.font_size * 3}px;")
-        self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.value_label.setText(str(self.value))
-        if self.is_hidden:
-            self.value_label.hide()
-
-    def change_value_visibility(self):
-        """
-        Переключение отображения значения карты
-        """
-        if self.value_label.isVisible():
-            self.set_value_visibility(False)
-        else:
-            self.set_value_visibility(True)
-
-    def set_value_visibility(self, status: bool):
-        """
-        Установка отображения значения карты
-        """
-        if status:
-            self.value_label.show()
-            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['hide'])))
-            self.visibility_btn.setStyleSheet(f"background-color: #5CDB95; font-size: {self.font_size}px; "
-                                             f"color: black;")
-        else:
-            self.value_label.hide()
-            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['show'])))
-            self.visibility_btn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
-
-    def closeEvent(self, event):
-        """
-        Установка карты закрытой, при её ручном закрытии
-        """
-        self.hide_card()
-
-    def open_card(self, opened_amount):
-        """
-        Открытие карты
-
-        Устанавливает значение закрытости карты. Передвигает карту в нужное положение. Открывает карту
-        """
-        self.is_opened = True
-        self.move(self.offset + (self.width() + self.offset) * opened_amount, self.offset + self.screen_size[1] // 2)
-        self.show()
-
-    def hide_card(self):
-        """
-        Закрытие карты
-
-        Устанавливает значение закрытости карты и закрывает карту
-        """
-        self.is_opened = False
-        self.close()
-
-
 class DefaultGame(QMainWindow):
     """
-    Класс, отвечающий за логику игры
+    Класс для логики игры
     """
     def __init__(self, screen_size, offset, player_mode, language, translations):
         super().__init__()
@@ -130,9 +34,7 @@ class DefaultGame(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        """
-        Инициализация интерфейса
-        """
+        """Инициализация интерфейса"""
         width = self.screen_size[0] - 2 * self.offset
         height = self.screen_size[1] // 2 - (self.offset + 30)
         shift = (width // 50 + height // 50) // 2
@@ -158,7 +60,7 @@ class DefaultGame(QMainWindow):
         self.take_button.setGeometry(width // 2,
                                      shift + (height - shift - shift) * 3 // 4,
                                      (width - shift - shift - shift) // 4, (height - shift - shift) // 4)
-        self.take_button.setStyleSheet(f"font-size: {font_size}px; color: #ffffff;")
+        self.take_button.setStyleSheet(f"font-size: {font_size}px;")
         self.take_button.setText(f"{self.translations[self.language]['take_card']}")
         self.take_button.clicked.connect(self.take_value_card)
 
@@ -167,7 +69,7 @@ class DefaultGame(QMainWindow):
         self.end_button.setGeometry(shift + (width - shift - shift) * 3 // 4,
                                     shift + (height - shift - shift) * 3 // 4,
                                     (width - shift - shift - shift) // 4, (height - shift - shift) // 4)
-        self.end_button.setStyleSheet(f"font-size: {font_size}px; color: #ffffff;")
+        self.end_button.setStyleSheet(f"font-size: {font_size}px;")
         self.end_button.setText(f"{self.translations[self.language]['end_turn']}")
         self.end_button.clicked.connect(self.switch_turn)
 
@@ -181,6 +83,7 @@ class DefaultGame(QMainWindow):
         self.exit_button.clicked.connect(self.closeEvent)
         self.exit_button.setVisible(False)
 
+        self.setWindowIcon(QtGui.QIcon('icons/game.ico'))
         self.setWindowTitle(f"21 {self.translations[self.language]['point']}")
         self.setGeometry(self.offset, self.offset + 30, width, height)
         self.setMinimumSize(width, height)
@@ -188,14 +91,14 @@ class DefaultGame(QMainWindow):
         self.show()
 
     def closeEvent(self, event):
-        """
-        Закрытие игры и сохранение статистики
-        """
+        """Закрытие игры и сохранение статистики"""
         self.close_cards(True)
         if self.winner is not None and not self.stats_updated:
-            with open("stats.json", "r+", encoding="utf-8") as f:
+            with open("stats.json", "r", encoding="utf-8") as f:
                 stats = json.load(f)
+            with open("stats.json", "w", encoding="utf-8") as f:
                 stats[f"{self.winner}"] += 1
+                print(stats)
                 json.dump(stats, f, ensure_ascii=False)
             self.stats_updated = True
         self.close()
@@ -205,13 +108,14 @@ class DefaultGame(QMainWindow):
         Переключение хода
 
         Закрывает карты текущего игрока и переключает ход. Изменяет информационный лейблы
+        :return: None
         """
         self.close_cards(True)
         self.current_player = (self.current_player + 1) % 2
         self.show_cards(self.current_player)
         if len(self.value_stack) != 0:
             self.take_button.setEnabled(True)
-        self.info_label1.setText(f"{self.translations[self.language]['end_turn']} {self.current_player + 1}")
+        self.info_label1.setText(f"{self.translations[self.language]['turn_of_player']} {self.current_player + 1}")
         self.info_label2.setText(
             f"{self.translations[self.language]['amount_of_cards']} {(self.current_player + 1) % 2 + 1}: "
             f"{len([card for card in self.value_cards if card.player_id == (self.current_player + 1) % 2])}")
@@ -221,9 +125,7 @@ class DefaultGame(QMainWindow):
             self.skipped += 1
 
     def start_game(self):
-        """
-        Создание стартовых карт
-        """
+        """Создание стартовых карт"""
         self.value_stack = list(range(1, 11))
         shuffle(self.value_stack)
         for i in range(4):
@@ -232,11 +134,7 @@ class DefaultGame(QMainWindow):
                                               self.translations, True))
 
     def end_game(self):
-        """
-        Завершение игры
-
-        Выбирает победителя и изменяет информационные лейблы
-        """
+        """Выбор победителя и изменение информационных лейблов"""
         points = {0: 0, 1: 0}
         for card in self.value_cards:
             points[card.player_id] += card.value
@@ -267,9 +165,9 @@ class DefaultGame(QMainWindow):
 
     def close_cards(self, close_all=False):
         """
-        Закрытие карт
-
-        Закрывает карты текущего игрока или всех игроков
+        Закрытие карт игроков.
+        :param close_all: Закрыть карты всех игроков (True) или только текущего (False)
+        :return: None
         """
         opened = [card.is_opened for card in self.value_cards].count(True)
         if not close_all:
@@ -291,8 +189,8 @@ class DefaultGame(QMainWindow):
     def show_cards(self, player_id):
         """
         Открытие карт
-
-        Открывает карты указанного игрока
+        :param player_id: Идентификатор игрока, чью карту надо открыть
+        :return:
         """
         opened = [card.is_opened for card in self.value_cards].count(True)
         for card in self.value_cards:
@@ -301,9 +199,7 @@ class DefaultGame(QMainWindow):
                 opened += 1
 
     def take_value_card(self):
-        """
-        Извлечение карты из колоды
-        """
+        """Извлечение карты из колоды и присвоение её текущему игроку"""
         value = self.value_stack.pop()
         self.skipped = 0
         self.value_cards.append(ValueCard(self.screen_size, self.offset, value,
@@ -315,3 +211,100 @@ class DefaultGame(QMainWindow):
             points[card.player_id] += card.value
         if points[self.current_player] > 21:
             self.end_game()
+
+
+class ValueCard(QWidget):
+    """
+    Класс для отображения значения карты, с возможностью скрывать её
+    """
+    def __init__(self, screen_size: set, offset: int, value: int, player_id: int, language,
+                 translations, is_hidden: bool = False):
+        super().__init__()
+        self.language = language
+        self.translations = translations
+        self.value = value
+        self.is_hidden = is_hidden
+        self.player_id = player_id
+        self.screen_size = screen_size
+        self.offset = offset
+        self.is_opened = False
+        self.font_size = (self.screen_size[0] + self.screen_size[1]) // 200
+        self.initUI()
+
+    def initUI(self):
+        """Инициализация интерфейса"""
+        card_width = self.screen_size[0] // 8 - self.offset // 4
+        card_height = self.screen_size[1] // 3 - (self.offset + 30)
+        shift = (self.width() // 50 + self.height() // 50) // 2
+
+        self.setWindowIcon(QtGui.QIcon("icons/card.ico"))
+        self.setWindowTitle(f"{self.translations[self.language]['card_of_player']} {self.player_id + 1}")
+        self.resize(card_width, card_height)
+        self.setMaximumSize(card_width, card_height)
+        self.setMinimumSize(card_width, card_height)
+
+        if self.is_hidden:
+            # Создать кнопку для отображения/скрывания значения карты
+            self.visibility_btn = QPushButton(self)
+            self.visibility_btn.setGeometry(shift, shift, card_width // 2 - 3 // 2 * shift, card_height - 2 * shift)
+            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['show'])))
+            self.visibility_btn.clicked.connect(self.change_value_visibility)
+            self.visibility_btn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
+
+        # Создать лейбл для отображения значения карты
+        self.value_label = QLabel(self)
+        self.value_label.setGeometry(card_width // 2 + shift // 2, 0, card_width // 2 - 3 // 2 * shift, card_height)
+        self.value_label.setStyleSheet(f"font-size: {self.font_size * 3}px;")
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.value_label.setText(str(self.value))
+        if self.is_hidden:
+            self.value_label.hide()
+
+    def change_value_visibility(self):
+        """Переключение отображения значения карты"""
+        if self.value_label.isVisible():
+            self.set_value_visibility(False)
+        else:
+            self.set_value_visibility(True)
+
+    def set_value_visibility(self, status: bool):
+        """
+        Установка отображения значения карты
+        :param status: Надо открыть (True) или закрыть (False) карту
+        :return: None
+        """
+        if status:
+            self.value_label.show()
+            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['hide'])))
+            self.visibility_btn.setStyleSheet(f"background-color: #5CDB95; font-size: {self.font_size}px; "
+                                              f"color: black;")
+        else:
+            self.value_label.hide()
+            self.visibility_btn.setText('\n'.join(list(self.translations[self.language]['show'])))
+            self.visibility_btn.setStyleSheet(f"background-color: #A23326; font-size: {self.font_size}px;")
+
+    def closeEvent(self, event):
+        """Установка карты закрытой, при её ручном закрытии"""
+        self.hide_card()
+
+    def open_card(self, opened_amount: int):
+        """
+        Открытие карты
+
+        Устанавливает значение закрытости карты. Передвигает карту в нужное положение. Открывает карту
+        :param opened_amount: Количество открытых карт
+        :return: None
+        """
+        self.is_opened = True
+        self.move(self.offset + (self.width() + self.offset) * opened_amount, self.offset + self.screen_size[1] // 2)
+        self.show()
+
+    def hide_card(self):
+        """
+        Закрытие карты
+
+        Устанавливает значение закрытости карты и закрывает карту
+        :return: None
+        """
+        self.is_opened = False
+        self.close()
